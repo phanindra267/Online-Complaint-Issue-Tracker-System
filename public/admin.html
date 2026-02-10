@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Complaint Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="container animate-fade-in">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Admin<span style="color: white">Dashboard</span></h1>
+            <a href="index.html" class="nav-link">Back to Home</a>
+        </header>
+
+        <div class="glass-panel" style="padding: 2rem; overflow-x: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2>Recent Complaints</h2>
+                <button onclick="fetchComplaints()"
+                    style="width: auto; padding: 0.5rem 1rem; background: rgba(255,255,255,0.1); font-size: 0.9rem;">Refresh</button>
+            </div>
+
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Complaint</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="complaintsTableBody">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #94a3b8;">Loading complaints...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="script.js"></script>
+    <script>
+        // Auto load complaints on admin page
+        document.addEventListener('DOMContentLoaded', fetchComplaints);
+    </script>
+</body>
+
+</html>
