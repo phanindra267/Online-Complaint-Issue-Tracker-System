@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Complaint Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container animate-fade-in" style="max-width: 500px; margin: 10vh auto;">
+        <header style="text-align: center; margin-bottom: 2rem;">
+            <h1>Admin<span style="color: white">Access</span></h1>
+            <p style="color: #94a3b8; margin-top: -1.5rem;">Authenticate to view and manage issues</p>
+        </header>
+
+        <div class="glass-panel" style="padding: 2.5rem;">
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required placeholder="Enter username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                
+                <button type="submit" id="loginBtn">
+                    <span>Login</span>
+                </button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <a href="index.html" class="nav-link">← Back to Portal</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="script.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            
+            loginBtn.innerHTML = 'Authenticating...';
+            loginBtn.disabled = true;
+
+            try {
+                const response = await fetch('/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    showToast('Authentication successful!');
+                    localStorage.setItem('adminToken', data.token);
+                    setTimeout(() => {
+                        window.location.href = 'admin.html';
+                    }, 1000);
+                } else {
+                    showToast(data.message || 'Invalid username or password', 'error');
+                }
+            } catch (err) {
+                showToast('Server connection error. Please try again.', 'error');
+            } finally {
+                loginBtn.innerHTML = 'Login';
+                loginBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

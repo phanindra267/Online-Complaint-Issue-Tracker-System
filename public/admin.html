@@ -1,45 +1,171 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Complaint Tracker</title>
+    <title>Admin Dashboard - IssueTracker</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
-
 <body>
+    <!-- Auth Gate check before UI loads -->
+    <script>
+        if (!localStorage.getItem('adminToken')) {
+            window.location.href = 'login.html';
+        }
+    </script>
 
-    <div class="container animate-fade-in">
+    <div class="container animate-fade-in" style="max-width: 1300px;">
         <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <h1>Admin<span style="color: white">Dashboard</span></h1>
-            <a href="index.html" class="nav-link">Back to Home</a>
+            <div class="logo">
+                <span class="icon-pulse">⚙️</span> Admin<span style="color: #fff">Dashboard</span>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <a href="index.html" class="nav-link">Home Portal</a>
+                <button onclick="adminLogout()" style="width: auto; padding: 0.5rem 1rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); font-size: 0.85rem;">Logout</button>
+            </div>
         </header>
 
-        <div class="glass-panel" style="padding: 2rem; overflow-x: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h2>Recent Complaints</h2>
-                <button onclick="fetchComplaints()"
-                    style="width: auto; padding: 0.5rem 1rem; background: rgba(255,255,255,0.1); font-size: 0.9rem;">Refresh</button>
+        <!-- Stats Counters -->
+        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="stat-card glass-panel">
+                <div class="stat-desc">Total Issues</div>
+                <div class="stat-value" id="statTotal">0</div>
+            </div>
+            <div class="stat-card glass-panel" style="border-left: 4px solid var(--warning);">
+                <div class="stat-desc">Pending</div>
+                <div class="stat-value text-warning" id="statPending">0</div>
+            </div>
+            <div class="stat-card glass-panel" style="border-left: 4px solid var(--success);">
+                <div class="stat-desc">Resolved</div>
+                <div class="stat-value text-success" id="statResolved">0</div>
+            </div>
+            <div class="stat-card glass-panel" style="border-left: 4px solid var(--danger);">
+                <div class="stat-desc">Rejected</div>
+                <div class="stat-value text-danger" id="statRejected">0</div>
+            </div>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 1rem; align-items: center;">
+                <div>
+                    <label for="searchFilter" style="font-size: 0.8rem;">Search</label>
+                    <input type="text" id="searchFilter" placeholder="Search by name, email, or ID..." style="padding: 0.5rem 0.75rem;">
+                </div>
+                <div>
+                    <label for="categoryFilter" style="font-size: 0.8rem;">Category</label>
+                    <select id="categoryFilter" style="padding: 0.5rem 0.75rem; background: var(--input-bg); color: white; border: 1px solid var(--glass-border); border-radius: 0.5rem; width: 100%;">
+                        <option value="">All</option>
+                        <option value="Technical">Technical</option>
+                        <option value="Billing">Billing</option>
+                        <option value="Account">Account</option>
+                        <option value="Feedback">Feedback</option>
+                        <option value="General">General</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="priorityFilter" style="font-size: 0.8rem;">Priority</label>
+                    <select id="priorityFilter" style="padding: 0.5rem 0.75rem; background: var(--input-bg); color: white; border: 1px solid var(--glass-border); border-radius: 0.5rem; width: 100%;">
+                        <option value="">All</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="statusFilter" style="font-size: 0.8rem;">Status</label>
+                    <select id="statusFilter" style="padding: 0.5rem 0.75rem; background: var(--input-bg); color: white; border: 1px solid var(--glass-border); border-radius: 0.5rem; width: 100%;">
+                        <option value="">All</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="sortOrder" style="font-size: 0.8rem;">Sort By</label>
+                    <select id="sortOrder" style="padding: 0.5rem 0.75rem; background: var(--input-bg); color: white; border: 1px solid var(--glass-border); border-radius: 0.5rem; width: 100%;">
+                        <option value="urgency">✨ AI Urgency Score</option>
+                        <option value="id-desc">ID (Newest first)</option>
+                        <option value="id-asc">ID (Oldest first)</option>
+                        <option value="status">Status</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Complaints Table -->
+        <div class="glass-panel" style="padding: 1.5rem; overflow-x: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="margin: 0; font-family: 'Outfit', sans-serif;">User Complaints</h2>
+                <button onclick="fetchComplaints()" style="width: auto; padding: 0.5rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); font-size: 0.85rem;">Refresh Data</button>
             </div>
 
             <table class="dashboard-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>User</th>
-                        <th>Complaint</th>
+                        <th style="width: 80px;">ID</th>
+                        <th>User Details</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th style="width: 120px;">AI Urgency</th>
                         <th>Status</th>
-                        <th>Actions</th>
+                        <th style="width: 150px; text-align: center;">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="complaintsTableBody">
                     <tr>
-                        <td colspan="5" style="text-align: center; color: #94a3b8;">Loading complaints...</td>
+                        <td colspan="7" style="text-align: center; color: #94a3b8; padding: 3rem;">Loading complaints database...</td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- Complaint View & Resolve Modal -->
+    <div class="modal-overlay" id="detailModal" style="display: none;">
+        <div class="glass-panel modal-content" style="max-width: 700px; padding: 2.5rem; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem;">
+                <h2 id="modalTitle" style="margin: 0; font-family: 'Outfit', sans-serif;">Complaint Details</h2>
+                <button onclick="closeDetailModal()" class="action-btn" style="width: auto; font-size: 1.2rem; padding: 0.25rem 0.5rem; line-height: 1;">✕</button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.2rem; font-size: 0.9rem;">
+                <div><strong>Submitter:</strong> <span id="mUser">--</span></div>
+                <div><strong>Email:</strong> <span id="mEmail">--</span></div>
+                <div><strong>Category:</strong> <span id="mCategory" class="status-badge" style="background: rgba(255,255,255,0.05); color: #fff;">--</span></div>
+                <div><strong>Priority:</strong> <span id="mPriority" class="status-badge" style="background: rgba(255,255,255,0.05); color: #fff;">--</span></div>
+                <div><strong>AI Urgency Index:</strong> <span id="mUrgency" style="font-weight: bold; color: var(--accent-color);">0.0</span></div>
+                <div><strong>Current Status:</strong> <span id="mStatus" class="status-badge">Pending</span></div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <strong style="font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 0.5rem;">User Description:</strong>
+                <p id="mText" style="margin: 0; background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 0.5rem; font-size: 0.95rem; line-height: 1.4; white-space: pre-wrap; max-height: 150px; overflow-y: auto;"></p>
+            </div>
+
+            <!-- AI Suggested Solution Box -->
+            <div class="ai-assist-box" id="aiSuggestionBox" style="margin-bottom: 1.5rem; border: 1px dashed rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.05);">
+                <div class="ai-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span class="sparkle-icon">✨</span>
+                        <span style="font-weight: 600; font-size: 0.85rem; color: #38bdf8;">AI Generated Resolution Draft</span>
+                    </div>
+                    <button onclick="applyAiSuggestion()" style="width: auto; padding: 0.25rem 0.75rem; font-size: 0.75rem; background: rgba(56, 189, 248, 0.2); text-transform: none; letter-spacing: normal;">Apply Suggestion</button>
+                </div>
+                <p id="aiSuggestionText" style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: #94a3b8; line-height: 1.4; font-style: italic;"></p>
+            </div>
+
+            <!-- Action Form -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="adminResponseInput">Resolution / Admin Comment</label>
+                <textarea id="adminResponseInput" rows="4" placeholder="Write feedback, resolution notes or rejection reason to user..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button onclick="submitAction('Resolved')" style="flex-grow: 1; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">Resolve</button>
+                <button onclick="submitAction('Rejected')" style="flex-grow: 1; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">Reject</button>
+            </div>
         </div>
     </div>
 
@@ -47,9 +173,15 @@
 
     <script src="script.js"></script>
     <script>
-        // Auto load complaints on admin page
+        // Auto fetch complaints on page load
         document.addEventListener('DOMContentLoaded', fetchComplaints);
+        
+        // Listeners for sorting and filter inputs
+        document.getElementById('searchFilter').addEventListener('input', fetchComplaints);
+        document.getElementById('categoryFilter').addEventListener('change', fetchComplaints);
+        document.getElementById('priorityFilter').addEventListener('change', fetchComplaints);
+        document.getElementById('statusFilter').addEventListener('change', fetchComplaints);
+        document.getElementById('sortOrder').addEventListener('change', fetchComplaints);
     </script>
 </body>
-
 </html>

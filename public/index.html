@@ -3,40 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complaint Tracker</title>
+    <title>IssueTracker - Smart Resolution Hub</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <div class="container animate-fade-in">
         <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <h1>Issue<span style="color: white">Tracker</span></h1>
-            <a href="admin.html" class="nav-link">Admin Login</a>
+            <div class="logo">
+                <span class="icon-pulse">⚡</span> Issue<span style="color: #fff">Tracker</span> <span class="ai-badge">AI Powered</span>
+            </div>
+            <a href="login.html" class="nav-link admin-nav-btn">Admin Dashboard</a>
         </header>
 
-        <div class="glass-panel" style="max-width: 600px; margin: 0 auto; padding: 2.5rem;">
-            <h2 style="margin-bottom: 1.5rem; text-align: center;">Submit a Complaint</h2>
+        <!-- Dynamic Portal Tabs -->
+        <div class="tab-container">
+            <button class="tab-btn active" id="tabSubmit">Submit a Complaint</button>
+            <button class="tab-btn" id="tabTrack">Track Issue Status</button>
+        </div>
+
+        <!-- Submit Panel -->
+        <div class="glass-panel portal-panel active" id="panelSubmit" style="max-width: 800px; margin: 0 auto; padding: 2.5rem;">
+            <h2 style="margin-bottom: 1.5rem; text-align: center; font-family: 'Outfit', sans-serif;">File an Issue</h2>
             <form id="complaintForm">
-                <div class="form-group">
-                    <label for="name">Full Name</label>
-                    <input type="text" id="name" required placeholder="John Doe">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" required placeholder="John Doe">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" required placeholder="john@example.com">
+                    </div>
                 </div>
-                
+
                 <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" required placeholder="john@example.com">
+                    <label for="text">Describe your issue in detail</label>
+                    <textarea id="text" rows="5" required placeholder="e.g. My invoice #1043 has been charged twice. Please refund."></textarea>
+                    
+                    <!-- AI Assist Badge and Preview Box -->
+                    <div class="ai-assist-box" id="aiAssistBox" style="display: none;">
+                        <div class="ai-header">
+                            <span class="sparkle-icon">✨</span>
+                            <span style="font-weight: 600; font-size: 0.85rem; color: #38bdf8;">AI Classification Preview</span>
+                        </div>
+                        <div class="ai-body" style="display: flex; gap: 1.5rem; margin-top: 0.5rem; font-size: 0.85rem;">
+                            <div>Category: <span id="aiCategory" class="badge">Detecting...</span></div>
+                            <div>Priority: <span id="aiPriority" class="badge">Detecting...</span></div>
+                            <div style="flex-grow: 1;">
+                                Urgency Index:
+                                <div class="progress-bar-bg">
+                                    <div class="progress-bar-fill" id="aiUrgencyBar" style="width: 10%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="text">Describe your issue</label>
-                    <textarea id="text" rows="5" required placeholder="Please describe the problem you are facing..."></textarea>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label for="category">Category (Optional Override)</label>
+                        <select id="category">
+                            <option value="">-- Let AI Classify --</option>
+                            <option value="Technical">Technical</option>
+                            <option value="Billing">Billing</option>
+                            <option value="Account">Account</option>
+                            <option value="Feedback">Feedback</option>
+                            <option value="General">General</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="priority">Priority (Optional Override)</label>
+                        <select id="priority">
+                            <option value="">-- Let AI Determine --</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
                 </div>
                 
                 <button type="submit" id="submitBtn">
                     <span>Submit Complaint</span>
                 </button>
             </form>
+        </div>
+
+        <!-- Track Panel -->
+        <div class="glass-panel portal-panel" id="panelTrack" style="max-width: 800px; margin: 0 auto; padding: 2.5rem; display: none;">
+            <h2 style="margin-bottom: 1.5rem; text-align: center; font-family: 'Outfit', sans-serif;">Track Issue Status</h2>
+            <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                <input type="text" id="trackSearchInput" placeholder="Enter Complaint ID or Email Address" style="flex-grow: 1;">
+                <button id="trackBtn" style="width: auto; padding: 0.75rem 2rem;">Track</button>
+            </div>
+
+            <!-- Track Results Timeline -->
+            <div id="trackResults" style="display: none;">
+                <div class="track-card glass-panel" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
+                        <h3 id="trackId" style="margin: 0; color: var(--accent-color);">ID: #--</h3>
+                        <span id="trackStatus" class="status-badge">Pending</span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; font-size: 0.9rem;">
+                        <div><strong>Category:</strong> <span id="trackCategory" class="status-badge" style="background: rgba(255,255,255,0.05); color: #fff;">General</span></div>
+                        <div><strong>Priority:</strong> <span id="trackPriority" class="status-badge" style="background: rgba(255,255,255,0.05); color: #fff;">Low</span></div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <strong style="font-size: 0.9rem; color: #94a3b8; display: block; margin-bottom: 0.25rem;">Complaint Text:</strong>
+                        <p id="trackText" style="margin: 0; background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 0.5rem; font-size: 0.95rem; line-height: 1.4;"></p>
+                    </div>
+
+                    <div id="trackResponseSection" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--glass-border);">
+                        <strong style="font-size: 0.9rem; color: #38bdf8; display: block; margin-bottom: 0.25rem;">✨ Official Resolution:</strong>
+                        <p id="trackResponse" style="margin: 0; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); padding: 0.75rem; border-radius: 0.5rem; font-size: 0.95rem; line-height: 1.4; color: #e2e8f0; font-style: italic;"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="trackError" style="display: none; text-align: center; color: var(--danger); font-weight: 500;">
+                No matching complaint found for the provided ID or Email.
+            </div>
+        </div>
+    </div>
+
+    <!-- Successful Submission Modal -->
+    <div class="modal-overlay" id="successModal" style="display: none;">
+        <div class="glass-panel modal-content" style="max-width: 500px; padding: 2.5rem; text-align: center;">
+            <div class="success-icon-pulse">✓</div>
+            <h2 style="font-family: 'Outfit', sans-serif; margin-bottom: 0.5rem; color: var(--success);">Submission Successful!</h2>
+            <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.5rem;">Your issue has been recorded and classified by our AI assistant.</p>
+            
+            <div class="glass-panel" style="padding: 1rem; margin-bottom: 2rem; background: rgba(0,0,0,0.2);">
+                <span style="font-size: 0.85rem; color: #94a3b8; display: block;">YOUR TRACKING ID</span>
+                <strong id="modalComplaintId" style="font-size: 1.8rem; color: var(--accent-color); letter-spacing: 2px;">#--</strong>
+                <span style="font-size: 0.8rem; color: #64748b; display: block; margin-top: 0.5rem;">Save this ID to track resolution progress.</span>
+            </div>
+
+            <button onclick="closeSuccessModal()" style="width: auto; padding: 0.75rem 2rem;">Done</button>
         </div>
     </div>
 
